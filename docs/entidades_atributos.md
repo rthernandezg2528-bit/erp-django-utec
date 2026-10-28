@@ -1,4 +1,5 @@
-Registrar en papel o en la libreta. Luego transcribir a `docs/entidades_atributos.md`.
+# Entidades y Atributos — ERP Django
+## Espiral 2 · Referencia para W05
 
 #### Entidad 1 — `Categoria`
 
@@ -85,5 +86,3 @@ Registrar en papel o en la libreta. Luego transcribir a `docs/entidades_atributo
 | `moneda` | `CharField(3)` | default='MXN' | ISO 4217 |
 | `iva_porcentaje` | `DecimalField(5,2)` | default=16.00 | IVA México estándar |
 | `logo` | `ImageField` | null=True, blank=True | Logo para facturas PDF |
-
----

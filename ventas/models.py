@@ -120,11 +120,7 @@ class DetalleVenta(models.Model):
         super().save(*args, **kwargs)
 
     def clean(self) -> None:
-        """Validación de negocio para línea de detalle.
-
-        Raises:
-            ValidationError: si cantidad < 1.
-        """
+        """Validación de negocio para línea de detalle (W06)."""
         if self.cantidad is not None and self.cantidad < 1:
             raise ValidationError(
                 {'cantidad': 'La cantidad debe ser al menos 1.'}
@@ -173,9 +169,11 @@ class Pedido(models.Model):
         null=True, blank=True, verbose_name='Fecha de entrega'
     )
     total_pagado  = models.DecimalField(
-        max_digits=10, decimal_places=2,
-        null=True, blank=True,
-        validators=[MinValueValidator(Decimal('0.00'))],   # ← W06 Parte 2
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))],   # W06
         verbose_name='Total pagado'
     )
 
@@ -188,11 +186,7 @@ class Pedido(models.Model):
         return f"{self.numero_pedido} — {self.cliente} [{self.get_estado_display()}]"
 
     def clean(self) -> None:
-        """Valida que la fecha de entrega no sea anterior al pedido.
-
-        Raises:
-            ValidationError: si fecha_entrega < fecha_pedido.date().
-        """
+        """Valida que la fecha de entrega no sea anterior al pedido (W06)."""
         if (self.fecha_entrega and self.fecha_pedido and
                 self.fecha_entrega < self.fecha_pedido.date()):
             raise ValidationError({

@@ -1,12 +1,7 @@
-# docker-compose.yml
-# Uso: docker-compose up --build
-# Requiere Docker Desktop instalado en la PC
-
+# docker-compose.yml — Uso: docker-compose up --build
 version: '3.9'
 
 services:
-
-  # ── Base de datos PostgreSQL ────────────────────────────────────────
   db:
     image: postgres:15-alpine
     restart: unless-stopped
@@ -24,14 +19,12 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Cache Redis (preparado para Celery en W16) ─────────────────────
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
       - "6379:6379"
 
-  # ── Aplicación Django ───────────────────────────────────────────────
   web:
     build: .
     restart: unless-stopped
@@ -51,7 +44,6 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: core.settings_prod
       SECRET_KEY:             dev-clave-docker-no-usar-en-produccion
-      DEBUG:                  "False"
       DATABASE_URL:           postgres://erp_user:erp_pass_local@db:5432/erp_db
       REDIS_URL:              redis://redis:6379/0
       ALLOWED_HOSTS:          localhost,127.0.0.1

@@ -1,29 +1,37 @@
 # core/settings.py
-import environ
+"""Configuración base del ERP Django — acumulado hasta W09."""
+import sys
 from pathlib import Path
 
+import environ
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# True cuando se ejecuta "python manage.py test ..."
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 # ── Variables de entorno ──────────────────────────────────────────────────
 env = environ.Env(DEBUG=(bool, True))
 environ.Env.read_env(BASE_DIR / '.env')
 
-SECRET_KEY  = env('SECRET_KEY', default='dev-key-insegura-solo-para-desarrollo')
-DEBUG       = env('DEBUG', default=True)
+SECRET_KEY    = env('SECRET_KEY', default='dev-key-insegura-solo-para-desarrollo')
+DEBUG         = env('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 # ── Apps instaladas ───────────────────────────────────────────────────────
 INSTALLED_APPS = [
-    # Jazzmin PRIMERO — antes de django.contrib.admin
-    'jazzmin',                         # ← W06
-
+    # Jazzmin PRIMERO — antes de django.contrib.admin (W06)
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',        # requerido por allauth (W09)
     # Terceros
+    'allauth',                     # W09
+    'allauth.account',             # W09
     'rest_framework',
     'whitenoise.runserver_nostatic',
     # Apps del ERP
@@ -32,7 +40,7 @@ INSTALLED_APPS = [
     'productos',
     'ventas',
     'reportes',
-    'configuracion',   # ← nueva app W05
+    'configuracion',
 ]
 
 MIDDLEWARE = [
@@ -44,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',   # W09: al final
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -52,7 +61,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],       # carpeta global de templates
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -65,6 +74,8 @@ TEMPLATES = [
     },
 ]
 
+WSGI_APPLICATION = 'core.wsgi.application'
+
 # ── Base de datos ─────────────────────────────────────────────────────────
 DATABASES = {
     'default': {
@@ -72,6 +83,13 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
 
 # ── Internacionalización ──────────────────────────────────────────────────
 LANGUAGE_CODE = 'es-mx'
@@ -81,9 +99,14 @@ USE_TZ        = True
 
 # ── Archivos estáticos ────────────────────────────────────────────────────
 STATIC_URL  = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']      # ← W06: para encontrar erp_custom.css
+STATIC_ROOT = BASE_DIR / 'staticfiles'       # destino de collectstatic
+STATICFILES_DIRS = [BASE_DIR / 'static']    # fuentes (≠ STATIC_ROOT)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# En los tests no existe staticfiles/ (no se corre collectstatic); el
+# almacenamiento "Manifest" fallaría al renderizar el admin. Se usa el simple.
+if TESTING:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 # ── Archivos media ────────────────────────────────────────────────────────
 MEDIA_URL  = '/media/'
@@ -94,7 +117,7 @@ LOGIN_URL           = '/accounts/login/'
 LOGIN_REDIRECT_URL  = '/productos/'
 LOGOUT_REDIRECT_URL = '/'
 
-# ── DRF ──────────────────────────────────────────────────────────────────
+# ── DRF ───────────────────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
@@ -102,12 +125,8 @@ REST_FRAMEWORK = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
 
-
-# ── JAZZMIN — Personalización del admin con Fable 5 AzulERP ───────────────
+# ── JAZZMIN — Personalización del admin con Fable 5 AzulERP (W06) ─────────
 JAZZMIN_SETTINGS = {
     'site_title':       'ERP Django',
     'site_header':      'ERP UTEC Celaya',
@@ -186,3 +205,22 @@ JAZZMIN_UI_TWEAKS = {
         'success':   'btn-success',
     },
 }
+
+# ── DJANGO SITES (requerido por allauth) — W09 ────────────────────────────
+SITE_ID = 1
+
+# ── AUTHENTICATION BACKENDS ───────────────────────────────────────────────
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# ── ALLAUTH: configuración para desarrollo académico ──────────────────────
+# allauth 0.63 usa ACCOUNT_AUTHENTICATION_METHOD; versiones 65+ usan
+# ACCOUNT_LOGIN_METHODS. Se dejan ambas para que funcione con cualquiera.
+ACCOUNT_AUTHENTICATION_METHOD = 'username'
+ACCOUNT_LOGIN_METHODS         = {'username'}
+ACCOUNT_EMAIL_REQUIRED        = False
+ACCOUNT_EMAIL_VERIFICATION    = 'none'
+ACCOUNT_LOGOUT_ON_GET         = True
+ACCOUNT_SESSION_REMEMBER      = True

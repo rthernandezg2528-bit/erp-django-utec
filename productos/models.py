@@ -6,6 +6,7 @@ Orden de implementación:
   2. Producto   (FK → Categoria, FK → Proveedor)  ← Parte 3
 """
 from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -82,28 +83,22 @@ class Producto(models.Model):
     )
 
     def clean(self) -> None:
-        """Validaciones de negocio cruzadas para Producto.
+        """Validaciones de negocio para Producto (W06).
 
-        Ejecutadas por full_clean() (formularios y llamadas explícitas).
-        No se ejecutan con save() directo.
-
-        Raises:
-            ValidationError: si precio < 0 o stock < 0.
+        Se ejecutan con full_clean() (formularios y llamadas explícitas),
+        NO con save() directo.
         """
         errors = {}
-
         if self.precio is not None and self.precio < 0:
             errors['precio'] = (
                 'El precio no puede ser negativo. '
                 f'Valor recibido: {self.precio}'
             )
-
         if self.stock is not None and self.stock < 0:
             errors['stock'] = (
                 'El stock no puede ser negativo. '
                 f'Valor recibido: {self.stock}'
             )
-
         if errors:
             raise ValidationError(errors)
 
