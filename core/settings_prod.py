@@ -48,8 +48,7 @@ SECURE_CONTENT_TYPE_NOSNIFF    = True
 SECURE_REFERRER_POLICY         = 'same-origin'
 
 # ── ARCHIVOS ESTÁTICOS ─────────────────────────────────────────────────────
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
+STATICFILES_STORAGE = 'core.storage.NonStrictManifestStorage'
 # ── LOGGING ────────────────────────────────────────────────────────────────
 LOGGING = {
     'version': 1,

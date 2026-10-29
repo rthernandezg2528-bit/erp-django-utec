@@ -101,7 +101,11 @@ USE_TZ        = True
 STATIC_URL  = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'       # destino de collectstatic
 STATICFILES_DIRS = [BASE_DIR / 'static']    # fuentes (≠ STATIC_ROOT)
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Manifest NO estricto (core/storage.py): si un archivo estático falta en el
+# manifiesto, usa la URL normal en lugar de lanzar ValueError (HTTP 500 en
+# /admin/ con Jazzmin en Render).
+STATICFILES_STORAGE = 'core.storage.NonStrictManifestStorage'
 
 # En los tests no existe staticfiles/ (no se corre collectstatic); el
 # almacenamiento "Manifest" fallaría al renderizar el admin. Se usa el simple.
